@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daftar M.U.R</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:teal;color:#fff;font-family:Arial;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.box{width:90%;max-width:400px;background:#151515;padding:25px;border-radius:20px}
+h1{text-align:center;color:darkgray}
+input,button{width:100%;padding:14px;margin-top:12px;border-radius:10px;border:0}
+input{background: black;color: blue}
+button{background: teal;color: darkgray;font-weight:bold}
+a{display:block;text-align:center;color:#aaa;margin-top:15px}
+#pesan{text-align:center;margin-top:15px}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>DAFTAR M.U.R</h1>
+<input id="nama" placeholder="Nama">
+<input id="phone" placeholder="Nomor HP">
+<input id="email" type="email" placeholder="Email / Username">
+<input id="password" type="password" placeholder="Password">
+<input id="ulang" type="password" placeholder="Ulangi Password">
+<button onclick="daftar()">DAFTAR</button>
+<div id="pesan"></div>
+<a href="index.html">Sudah punya akun? Login</a>
+</div>
+
+<script>
+function daftar(){
+ const nama=document.getElementById("nama").value.trim();
+ const phone=document.getElementById("phone").value.trim();
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ const ulang=document.getElementById("ulang").value;
+
+ if(!nama||!phone||!email||!password){
+   pesan.textContent="Lengkapi semua data.";
+   return;
+ }
+ if(password!==ulang){
+   pesan.textContent="Password tidak sama.";
+   return;
+ }
+
+ localStorage.setItem("akunMUR",JSON.stringify({
+   username:email,
+   password:password,
+   nama:nama,
+   phone:phone
+ }));
+
+ alert("Pendaftaran berhasil.");
+ location.href="index.html";
+}
+</script>
+</body>
+</html>
