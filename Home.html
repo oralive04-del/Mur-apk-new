@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M.U.R Tracker</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    min-height:100vh;
+    background:#1f2933;
+    color:#fff;
+    font-family:Arial,sans-serif;
+    padding:20px;
+}
+
+.dashboard{
+    max-width:600px;
+    margin:0 auto;
+    background:#050505;
+    border-radius:25px;
+    padding:25px;
+    border:1px solid #008080;
+}
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:2px solid #008080;
+    padding-bottom:15px;
+    margin-bottom:20px;
+}
+
+.header h2{
+    margin:0;
+    color:#00a6a6;
+}
+
+.logout{
+    background:#8b0000;
+    color:white;
+    border:0;
+    padding:8px 15px;
+    border-radius:15px;
+}
+
+.search{
+    display:flex;
+    gap:10px;
+    margin-bottom:25px;
+}
+
+.search input{
+    flex:1;
+    min-width:0;
+    padding:14px 18px;
+    border:1px solid #777;
+    border-radius:25px;
+    background:#111;
+    color:#fff;
+    outline:none;
+}
+
+.search button{
+    background:#00a6a6;
+    color:#000;
+    border:0;
+    padding:0 22px;
+    border-radius:25px;
+    font-weight:bold;
+}
+
+.result{
+    background:#111;
+    border:1px dashed #008080;
+    border-radius:15px;
+    padding:20px;
+}
+
+.result h3{
+    margin-top:0;
+    color:#00a6a6;
+}
+
+#status{
+    word-break:break-word;
+}
+
+#location{
+    line-height:1.7;
+    word-break:break-word;
+}
+
+a{
+    color:#00d0d0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <div class="header">
+        <div>
+            <h2>★ M.U.R TRACK ★</h2>
+            <small id="user">Memuat...</small>
+        </div>
+
+        <button class="logout" onclick="logout()">Keluar</button>
+    </div>
+
+    <div class="search">
+        <input
+            id="targetNumber"
+            type="tel"
+            placeholder="Nomor WhatsApp tujuan"
+        >
+
+        <button onclick="kirimPermintaan()">
+            Lacak
+        </button>
+    </div>
+
+    <div class="result">
+
+        <h3>Status Permintaan</h3>
+
+        <p>
+            <b>Nomor:</b>
+            <span id="nomorHasil">-</span>
+        </p>
+
+        <p>
+            <b>Status:</b>
+            <span id="status">-</span>
+        </p>
+
+        <div id="location"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+const FIREBASE_URL =
+"https://mur-studio-default-rtdb.asia-southeast1.firebasedatabase.app/";
+
+const HOSTING_URL =
+"https://oralive04-del.github.io/Mur-apk-new/minta_izin.html";
+
+let sesi = null;
+let akun = null;
+let pemantauan = null;
+
+
+/* =========================
+   CEK LOGIN
+========================= */
+
+window.onload = function(){
+
+    try{
+
+        sesi = JSON.parse(
+            localStorage.getItem("sesiMUR") || "null"
+        );
+
+        akun = JSON.parse(
+            localStorage.getItem("akunMUR") || "null"
+        );
+
+    }catch(e){
+
+        sesi = null;
+        akun = null;
+
+    }
+
+    if(!sesi || !akun){
+
+        location.href = "index.html";
+        return;
+
+    }
+
+    document.getElementById("user").textContent =
+        "Login: " + (sesi.username || akun.username);
+
+};
+
+
+/* =========================
+   NORMALISASI NOMOR
+========================= */
+
+function normalisasiNomor(input){
+
+    let nomor = String(input).replace(/\D/g,"");
+
+    if(nomor.startsWith("0")){
+
+        nomor = "62" + nomor.substring(1);
+
+    }else if(nomor.startsWith("8")){
+
+        nomor = "62" + nomor;
+
+    }
+
+    return nomor;
+
+}
+
+
+/* =========================
+   KIRIM PERMINTAAN
+========================= */
+
+async function kirimPermintaan(){
+
+    const input =
+        document.getElementById("targetNumber");
+
+    const target =
+        normalisasiNomor(input.value);
+
+    if(target.length < 10){
+
+        document.getElementById("status").textContent =
+            "Nomor WhatsApp tidak valid.";
+
+        return;
+
+    }
+
+    const requestId =
+        "MUR_" +
+        Date.now() +
+        "_" +
+        Math.random()
+            .toString(36)
+            .substring(2,8);
+
+    document.getElementById("nomorHasil").textContent =
+        target;
+
+    document.getElementById("status").textContent =
+        "Membuat permintaan...";
+
+    document.getElementById("location").innerHTML = "";
+
+    const data = {
+
+        fromUser:
+            sesi.username || akun.username,
+
+        targetPhone:
+            target,
+
+        status:
+            "menunggu",
+
+        createdAt:
+            Date.now()
+
+    };
+
+
+    try{
+
+        const response = await fetch(
+
+            FIREBASE_URL +
+            "permintaan/" +
+            encode
