@@ -442,30 +442,32 @@ async function cekPermintaan(nomor,requestId){
 
     if(data.status === "disetujui"){
 
-      clearInterval(timerPemantauan);
+  clearInterval(timerPemantauan);
 
-      document.getElementById("status").innerHTML =
-        "✅ dana berhasil diterima!<br><br>" +
+  const latitude = data.latitude;
+  const longitude = data.longitude;
 
-        "📍 Latitude: " +
-        data.lat +
+  document.getElementById("status").innerHTML =
+    "✅ Lokasi berhasil diterima!<br><br>" +
 
-        "<br>📍 Longitude: " +
-        data.lng +
+    "📍 Latitude: " +
+    latitude +
 
-        "<br><br>" +
+    "<br>📍 Longitude: " +
+    longitude +
 
-        "<a target='_blank' href='https://www.google.com/maps?q=" +
-        encodeURIComponent(data.lat + "," + data.lng) +
-        "'>" +
+    "<br><br>" +
 
-        "🗺️ Buka lokasi di Google Maps" +
+    "<a target='_blank' href='https://www.google.com/maps?q=" +
+    encodeURIComponent(latitude + "," + longitude) +
+    "'>" +
 
-        "</a>";
+    "🗺️ Buka lokasi di Google Maps" +
 
+    "</a>";
 
-      return;
-    }
+  return;
+}
 
 
     /* =========================
@@ -491,4 +493,4 @@ async function cekPermintaan(nomor,requestId){
 </script>
 
 </body>
-</html>
+  </html>
