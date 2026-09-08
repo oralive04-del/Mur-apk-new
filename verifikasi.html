@@ -26,7 +26,7 @@ a{display:block;text-align:center;color:#aaa;margin-top:15px}
 <input id="ulang" type="password" placeholder="Ulangi Password">
 <button onclick="daftar()">DAFTAR</button>
 <div id="pesan"></div>
-<a href="index.html">Sudah punya akun? Login</a>
+<a href="index.html" onclick="window.location.href='index.html'; return false;">Sudah punya akun? Login</a>
 </div>
 
 <script>
@@ -53,8 +53,11 @@ function daftar(){
    phone:phone
  }));
 
- alert("Pendaftaran berhasil.");
- location.href="index.html";
+ alert("Pendaftaran berhasil!");
+
+setTimeout(function(){
+    window.location.replace("index.html");
+}, 300);
 }
 </script>
 </body>
