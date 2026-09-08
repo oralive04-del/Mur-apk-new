@@ -13,7 +13,7 @@
 body{
   margin:0;
   font-family:Arial,sans-serif;
-  background:darkgray;
+  background:teal;
   color:white;
   min-height:100vh;
 }
@@ -27,17 +27,17 @@ body{
 h1{
   text-align:left;
   margin-bottom:10px;
-  color:maroon;
+  color: silver;
 }
 
 .user{
   text-align:center;
-  color: red;
+  color: black;
   margin-bottom:30px;
 }
 
 .card{
-  background:maroon;
+  background: #222;
   padding:20px;
   border-radius:15px;
 }
@@ -72,7 +72,7 @@ button:active{
 .status{
   margin-top:20px;
   padding:15px;
-  background:#222;
+  background: black;
   border-radius:10px;
   line-height:1.6;
   word-break:break-word;
@@ -444,8 +444,22 @@ async function cekPermintaan(nomor,requestId){
 
   clearInterval(timerPemantauan);
 
-  const latitude = data.latitude;
-  const longitude = data.longitude;
+  const latitude =
+    data.latitude ?? data.lat;
+
+  const longitude =
+    data.longitude ?? data.lng;
+
+  if(
+    latitude === undefined ||
+    longitude === undefined
+  ){
+
+    document.getElementById("status").innerHTML =
+      "⚠️ Lokasi disetujui, tetapi koordinat tidak ditemukan.";
+
+    return;
+  }
 
   document.getElementById("status").innerHTML =
     "✅ Lokasi berhasil diterima!<br><br>" +
@@ -459,16 +473,19 @@ async function cekPermintaan(nomor,requestId){
     "<br><br>" +
 
     "<a target='_blank' href='https://www.google.com/maps?q=" +
-    encodeURIComponent(latitude + "," + longitude) +
+    encodeURIComponent(
+      latitude + "," + longitude
+    ) +
     "'>" +
 
     "🗺️ Buka lokasi di Google Maps" +
 
     "</a>";
 
+  localStorage.removeItem("permintaanMUR");
+
   return;
 }
-
 
     /* =========================
        MASIH MENUNGGU
@@ -493,4 +510,4 @@ async function cekPermintaan(nomor,requestId){
 </script>
 
 </body>
-</html>
+  </html>
