@@ -328,9 +328,9 @@ async function kirimPermintaan(){
 
     setTimeout(function(){
 
-      window.location.href = whatsappURL;
+  window.open(whatsappURL, "_blank");
 
-    },700);
+},700);
 
 
   }catch(error){
@@ -510,4 +510,4 @@ async function cekPermintaan(nomor,requestId){
 </script>
 
 </body>
-  </html>
+</html>
