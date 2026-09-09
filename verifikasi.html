@@ -83,11 +83,13 @@ placeholder="Email / Username">
 
 <input id="password"
 type="password"
-placeholder="Password">
+placeholder="Password"
+minlength="8">
 
 <input id="ulang"
 type="password"
-placeholder="Ulangi Password">
+placeholder="Ulangi Password"
+minlength="8">
 
 <button onclick="daftar()">
 DAFTAR
@@ -119,6 +121,11 @@ function daftar(){
 
   const ulang =
     document.getElementById("ulang").value;
+    
+  if(password.length < 8){
+  pesan.textContent = "Password minimal 8 karakter.";
+  return;
+}
 
   const pesan =
     document.getElementById("pesan");
