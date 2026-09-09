@@ -107,6 +107,12 @@ Memuat akun...
 Minta Lokasi
 </button>
 
+<button
+    onclick="keluarakun()"
+    
+  style="margin-top:12px; background:maroon;color: white;">keluar</button>
+
+
 <div class="status" id="status">
 Belum ada permintaan.
 </div>
@@ -505,6 +511,22 @@ async function cekPermintaan(nomor,requestId){
 
   }
 
+}
+function keluarAkun(){
+
+  if(!confirm("Yakin ingin keluar dari akun?")){
+    return;
+  }
+
+  if(timerPemantauan){
+    clearInterval(timerPemantauan);
+    timerPemantauan = null;
+  }
+
+  localStorage.removeItem("sesiMUR");
+  localStorage.removeItem("permintaanMUR");
+
+  window.location.replace("index.html");
 }
 
 </script>
